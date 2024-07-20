@@ -1,0 +1,84 @@
+#include <stdio.h>
+#include <string.h>
+#define SIZE 5
+void generateKeySquare(char key[], char keySquare[SIZE][SIZE]) {
+    int i, j, k, flag = 0;
+    int count[26] = {0};
+    char c;
+    for (i = 0, k = 0; key[i] != '\0'; i++) {
+        if (key[i] == 'j') key[i] = 'i';
+        if (count[key[i] - 'a'] == 0) {
+            key[k++] = key[i];
+            count[key[i] - 'a'] = 1;
+        }
+    }
+    key[k] = '\0';
+    for (i = 0, k = 0; i < SIZE; i++) {
+        for (j = 0; j < SIZE; j++) {
+            if (k < strlen(key)) {
+                keySquare[i][j] = key[k++];
+            } else {
+                for (c = 'a'; c <= 'z'; c++) {
+                    if (c == 'j') continue;
+                    if (count[c - 'a'] == 0) {
+                        keySquare[i][j] = c;
+                        count[c - 'a'] = 1;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+void encryptPair(char keySquare[SIZE][SIZE], char a, char b, char* res) {
+    int r1, c1, r2, c2, i, j;
+    for (i = 0; i < SIZE; i++) {
+        for (j = 0; j < SIZE; j++) {
+            if (keySquare[i][j] == a) {
+                r1 = i;
+                c1 = j;
+            }
+            if (keySquare[i][j] == b) {
+                r2 = i;
+                c2 = j;
+            }
+        }
+    }
+    if (r1 == r2) {
+        res[0] = keySquare[r1][(c1 + 1) % SIZE];
+        res[1] = keySquare[r2][(c2 + 1) % SIZE];
+    }
+    else if (c1 == c2) {
+        res[0] = keySquare[(r1 + 1) % SIZE][c1];
+        res[1] = keySquare[(r2 + 1) % SIZE][c2];
+    }
+    else {
+        res[0] = keySquare[r1][c2];
+        res[1] = keySquare[r2][c1];
+    }
+}
+void playfairCipher(char plaintext[], char key[]) {
+    char keySquare[SIZE][SIZE];
+    char ciphertext[100];
+    int i, j, k = 0, len = strlen(plaintext);
+    generateKeySquare(key, keySquare);
+    for (i = 0; i < len; i += 2) {
+        char a = plaintext[i];
+        char b = (i + 1 < len) ? plaintext[i + 1] : 'x'; 
+        if (a == b) b = 'x';  
+        encryptPair(keySquare, a, b, &ciphertext[k]);
+        k += 2;
+    }
+    ciphertext[k] = '\0';
+    printf("Encrypted text: %s\n", ciphertext);
+}
+int main() {
+    char plaintext[100];
+    char key[100];
+    printf("Enter a string to encrypt: ");
+    gets(plaintext);
+    printf("Enter the key: ");
+    gets(key);
+    playfairCipher(plaintext, key);
+    return 0;
+}
