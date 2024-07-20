@@ -1,0 +1,59 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#define CIPHER_LEN 193
+void frequencyAnalysis(char ciphertext[], int freq[]) {
+    for (int i = 0; i < 256; i++) {
+        freq[i] = 0;
+    }
+    for (int i = 0; i < strlen(ciphertext); i++) {
+        if (isprint(ciphertext[i])) {
+            freq[(int)ciphertext[i]]++; 
+        }
+    }
+}
+char findMostFrequentChar(int freq[]) {
+    int max = 0;
+    char maxChar = 0;
+    for (int i = 0; i < 256; i++) {
+        if (freq[i] > max) {
+            max = freq[i];
+            maxChar = i;
+        }
+    }
+    return maxChar;
+}
+void applyMapping(char mapping[], char ciphertext[], char plaintext[]) {
+    for (int i = 0; i < strlen(ciphertext); i++) {
+        plaintext[i] = mapping[(int)ciphertext[i]];
+    }
+    plaintext[strlen(ciphertext)] = '\0';
+}
+int main() {
+    char ciphertext[] = "53‡‡†305))6*;4826)4‡.)4‡);806*;48†8¶60))85;;]8*;:‡*8†83(88)5*†;46(;88*96*?;8)*‡(;485);5*†2:*‡(;4956*2(5*—4)8¶8*;4069285);)6†8)4‡‡;1(‡9;48081;8:8‡1;48†85;4)485†528806*81(‡9;48;(88;4(‡?34;48)4‡;161;:188;‡?;";
+    char plaintext[CIPHER_LEN + 1];
+    int freq[256];
+    char mapping[256];
+    frequencyAnalysis(ciphertext, freq);
+    char mostFrequentChar = findMostFrequentChar(freq);
+    for (int i = 0; i < 256; i++) {
+        mapping[i] = i;
+    }
+    mapping[(int)mostFrequentChar] = 'E';
+    applyMapping(mapping, ciphertext, plaintext);
+    printf("Partially decrypted text after frequency analysis:\n%s\n\n", plaintext);
+    mapping[(int)';'] = 'T';
+    mapping[(int)'6'] = 'H';
+    applyMapping(mapping, ciphertext, plaintext);
+    printf("Partially decrypted text after mapping 'THE':\n%s\n\n", plaintext);
+    mapping[(int)'8'] = 'O';
+    mapping[(int)'*'] = 'A';
+    mapping[(int)')'] = 'N';
+    mapping[(int)'5'] = 'I';
+    mapping[(int)'4'] = 'S';
+    mapping[(int)'0'] = 'R';
+    mapping[(int)'.'] = 'D';
+    applyMapping(mapping, ciphertext, plaintext);
+    printf("Partially decrypted text after additional mapping:\n%s\n\n", plaintext);
+    return 0;
+}
