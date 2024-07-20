@@ -1,0 +1,40 @@
+#include <stdio.h>
+#include <string.h>
+
+void monoalphabeticCipher(char text[], char key[]) {
+    char plaintextAlphabet[] = "abcdefghijklmnopqrstuvwxyz";
+    int i = 0;
+
+    while (text[i] != '\0') {
+        if (text[i] >= 'a' && text[i] <= 'z') {
+            text[i] = key[text[i] - 'a'];
+        } else if (text[i] >= 'A' && text[i] <= 'Z') {
+            text[i] = key[text[i] - 'A'] - 'a' + 'A';
+        }
+        i++;
+    }
+}
+
+int main() {
+    char text[100];
+    char key[27]; 
+
+    printf("Enter a message to encrypt: ");
+    fgets(text, sizeof(text), stdin);
+    text[strcspn(text, "\n")] = '\0';
+
+    printf("Enter the substitution key (26 unique letters): ");
+    fgets(key, sizeof(key), stdin);
+    key[strcspn(key, "\n")] = '\0';
+
+    if (strlen(key) != 26) {
+        printf("Invalid key. The key must contain 26 unique letters.\n");
+        return 1;
+    }
+
+    monoalphabeticCipher(text, key);
+
+    printf("Encrypted message: %s\n", text);
+
+    return 0;
+}
