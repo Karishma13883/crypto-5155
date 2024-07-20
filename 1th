@@ -1,0 +1,24 @@
+#include <stdio.h>
+#include <string.h>
+int caesarCipher(char text[], int k) {
+    int i = 0;
+    while (text[i] != '\0') {
+        text[i] = (text[i] >= 'A' && text[i] <= 'Z') ? ((text[i] - 'A' + k) % 26) + 'A' :
+                  (text[i] >= 'a' && text[i] <= 'z') ? ((text[i] - 'a' + k) % 26) + 'a' :
+                  text[i];
+        i++;
+    }
+}
+int main() {
+    char text[100];
+    int k;
+    printf("Enter a message to encrypt: ");
+    fgets(text, sizeof(text), stdin);
+    text[strcspn(text, "\n")] = '\0';
+    printf("Enter the shift amount (1-25): ");
+    scanf("%d", &k);
+    (k >= 1 && k <= 25) ? caesarCipher(text, k) : printf("Invalid shift amount. Please enter a value between 1 and 25.\n");
+    (k >= 1 && k <= 25) ? printf("Encrypted message: %s\n", text) : 0;
+
+    return 0;
+}
