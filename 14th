@@ -1,0 +1,50 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+
+void generateRandomKey(int key[], int length) {
+    for (int i = 0; i < length; i++) {
+        key[i] = rand() % 26;
+    }
+}
+
+void encrypt(char plaintext[], char ciphertext[], int key[], int length) {
+    for (int i = 0; i < length; i++) {
+        int shift = key[i];
+        ciphertext[i] = ((plaintext[i] - 'A' + shift) % 26) + 'A';
+    }
+    ciphertext[length] = '\0';
+}
+
+void decrypt(char ciphertext[], char decryptedtext[], int key[], int length) {
+    for (int i = 0; i < length; i++) {
+        int shift = key[i];
+        decryptedtext[i] = ((ciphertext[i] - 'A' - shift + 26) % 26) + 'A';
+    }
+    decryptedtext[length] = '\0';
+}
+
+int main() {
+    srand(time(0));  // Seed for random number generation
+
+    char plaintext[] = "HELLO";  // Example plaintext
+    int length = strlen(plaintext);
+
+    int key[length];
+    generateRandomKey(key, length);
+
+    char ciphertext[length + 1];
+    encrypt(plaintext, ciphertext, key, length);
+
+    printf("Plaintext: %s\n", plaintext);
+    printf("Ciphertext: %s\n", ciphertext);
+
+    char decryptedtext[length + 1];
+    decrypt(ciphertext, decryptedtext, key, length);
+
+    printf("Decrypted text: %s\n", decryptedtext);
+
+    return 0;
+}
