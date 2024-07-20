@@ -1,0 +1,38 @@
+#include <stdio.h>
+int modInverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++) {
+        if ((a * x) % m == 1) {
+            return x;
+        }
+    }
+    return -1;
+}
+char decryptChar(int y, int a_inv, int b) {
+    return (a_inv * (y - b + 26) % 26) + 'A';
+}
+int main() {
+    int y1 = 1, y2 = 20;
+    int x1 = 4, x2 = 19;
+    int a = ((y1 - y2 + 26) * modInverse(x1 - x2 + 26, 26)) % 26;
+    int b = (y1 - a * x1 + 26) % 26;
+    int a_inv = modInverse(a, 26);
+    if (a_inv == -1) {
+        printf("Inverse of %d mod 26 doesn't exist.\n", a);
+        return 1;
+    }
+    printf("Affine Cipher keys: a = %d, b = %d\n", a, b);
+    char ciphertext[] = "B_U_"; 
+    int i = 0;
+    printf("Decrypted text: ");
+    while (ciphertext[i] != '\0') {
+        if (ciphertext[i] >= 'A' && ciphertext[i] <= 'Z') {
+            printf("%c", decryptChar(ciphertext[i] - 'A', a_inv, b));
+        } else {
+            printf("%c", ciphertext[i]);
+        }
+        i++;
+    }
+    printf("\n");
+    return 0;
+}
