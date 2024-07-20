@@ -1,0 +1,68 @@
+#include <stdio.h>
+#define ALPHABET_SIZE 26
+int modInverse(int a, int m) {
+    a = a % m;
+    for (int x = 1; x < m; x++) {
+        if ((a * x) % m == 1)
+            return x;
+    }
+    return -1;
+}
+void affineEncrypt(char *plaintext, int a, int b, char *ciphertext) {
+    int i = 0;
+    while (plaintext[i] != '\0') {
+        if (plaintext[i] >= 'a' && plaintext[i] <= 'z') {
+            ciphertext[i] = ((a * (plaintext[i] - 'a') + b) % ALPHABET_SIZE) + 'a';
+        } else if (plaintext[i] >= 'A' && plaintext[i] <= 'Z') {
+            ciphertext[i] = ((a * (plaintext[i] - 'A') + b) % ALPHABET_SIZE) + 'A';
+        } else {
+            ciphertext[i] = plaintext[i];
+        }
+        i++;
+    }
+    ciphertext[i] = '\0';
+}
+void affineDecrypt(char *ciphertext, int a, int b, char *plaintext) {
+    int a_inv = modInverse(a, ALPHABET_SIZE);
+    if (a_inv == -1) {
+        printf("No modular inverse for given 'a' and modulo %d.\n", ALPHABET_SIZE);
+        return;
+    }
+    int i = 0;
+    while (ciphertext[i] != '\0') {
+        if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z') {
+            plaintext[i] = (a_inv * ((ciphertext[i] - 'a') - b + ALPHABET_SIZE) % ALPHABET_SIZE) + 'a';
+        } else if (ciphertext[i] >= 'A' && ciphertext[i] <= 'Z') {
+            plaintext[i] = (a_inv * ((ciphertext[i] - 'A') - b + ALPHABET_SIZE) % ALPHABET_SIZE) + 'A';
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
+        i++;
+    }
+    plaintext[i] = '\0';
+}
+void findKeys() {
+    int a, b;
+    for (a = 1; a < ALPHABET_SIZE; a++) {
+        if (modInverse(a, ALPHABET_SIZE) != -1) { 
+            for (b = 0; b < ALPHABET_SIZE; b++) {
+                if ((4 * a + b) % ALPHABET_SIZE == 1 && (19 * a + b) % ALPHABET_SIZE == 20) {
+                    printf("Possible key: a = %d, b = %d\n", a, b);
+                }
+            }
+        }
+    }
+}
+int main() {
+    char plaintext[] = "HELLO";
+    char ciphertext[100];
+    char decryptedtext[100];
+    int a = 5; 
+    int b = 8;
+    affineEncrypt(plaintext, a, b, ciphertext);
+    printf("Encrypted text: %s\n", ciphertext);
+    affineDecrypt(ciphertext, a, b, decryptedtext);
+    printf("Decrypted text: %s\n", decryptedtext);
+    findKeys();
+    return 0;
+}
