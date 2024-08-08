@@ -1,0 +1,76 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <math.h>
+
+#define BIT_LENGTH 8 // For simplicity, use small numbers; for real RSA, use large primes
+
+// Function to compute gcd of a and b
+int gcd(int a, int b) {
+    if (b == 0)
+        return a;
+    return gcd(b, a % b);
+}
+
+// Extended Euclidean Algorithm to find the modular inverse of a modulo m
+int extended_gcd(int a, int b, int *x, int *y) {
+    if (a == 0) {
+        *x = 0;
+        *y = 1;
+        return b;
+    }
+    int x1, y1;
+    int gcd = extended_gcd(b % a, a, &x1, &y1);
+    *x = y1 - (b / a) * x1;
+    *y = x1;
+    return gcd;
+}
+
+// Function to find modular inverse of a modulo m
+int mod_inverse(int a, int m) {
+    int x, y;
+    int gcd = extended_gcd(a, m, &x, &y);
+    if (gcd != 1)
+        return -1; // Modular inverse does not exist if gcd != 1
+    else {
+        return (x % m + m) % m; // Make sure result is positive
+    }
+}
+
+// Function to generate RSA keys
+void generate_rsa_keys(int *n, int *e, int *d, int p, int q) {
+    // Compute modulus n
+    *n = p * q;
+
+    // Compute Euler's totient function f(n)
+    int phi_n = (p - 1) * (q - 1);
+
+    // Choose public exponent e
+    *e = 3; // For simplicity, using a small prime; in real RSA, e should be large and coprime with f(n)
+    if (gcd(*e, phi_n) != 1) {
+        printf("Invalid public exponent.\n");
+        exit(1);
+    }
+
+    // Compute private exponent d
+    *d = mod_inverse(*e, phi_n);
+    if (*d == -1) {
+        printf("Modular inverse does not exist.\n");
+        exit(1);
+    }
+}
+
+int main() {
+    // Example prime numbers; in real RSA, use large primes
+    int p = 61;
+    int q = 53;
+
+    int n, e, d;
+
+    generate_rsa_keys(&n, &e, &d, p, q);
+
+    printf("Public Key: (e = %d, n = %d)\n", e, n);
+    printf("Private Key: (d = %d)\n", d);
+
+    return 0;
+}
