@@ -1,0 +1,47 @@
+
+#include <stdio.h>
+#include <string.h>
+
+#define BLOCK_SIZE 8
+
+// Simple XOR-based "encryption" function for demonstration
+void encrypt_block(const unsigned char *input, unsigned char *output, const unsigned char *key) {
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        output[i] = input[i] ^ key[i];
+    }
+}
+
+// ECB mode encryption function
+void encrypt_ecb(const unsigned char *plaintext, int plaintext_len,
+                 const unsigned char *key, unsigned char *ciphertext) {
+    for (int i = 0; i < plaintext_len; i += BLOCK_SIZE) {
+        encrypt_block(plaintext + i, ciphertext + i, key);
+    }
+}
+
+// Display data in hexadecimal format
+void print_hex(const unsigned char *data, int len) {
+    for (int i = 0; i < len; i++) {
+        printf("%02x", data[i]);
+    }
+    printf("\n");
+}
+
+int main() {
+    // Key must be exactly BLOCK_SIZE bytes long
+    const unsigned char key[BLOCK_SIZE] = {0x6d, 0x79, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74}; // "mysecret"
+
+    const unsigned char plaintext[] = "This is a test!";
+    int plaintext_len = sizeof(plaintext) - 1; // Exclude null terminator
+    int padded_len = ((plaintext_len + BLOCK_SIZE - 1) / BLOCK_SIZE) * BLOCK_SIZE; // Padding to block size
+
+    unsigned char ciphertext[padded_len];
+    memset(ciphertext, 0, sizeof(ciphertext));
+
+    encrypt_ecb(plaintext, padded_len, key, ciphertext);
+
+    printf("Ciphertext (ECB mode):\n");
+    print_hex(ciphertext, padded_len);
+
+    return 0;
+}
