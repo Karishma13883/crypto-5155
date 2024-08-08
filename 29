@@ -1,0 +1,65 @@
+
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+#define MATRIX_SIZE 5 // 5x5 matrix for SHA-3
+#define LANE_BITS 64  // Each lane is 64 bits (for simplification)
+#define TOTAL_LANES (MATRIX_SIZE * MATRIX_SIZE) // Total lanes
+
+// Function to initialize the internal state matrix
+void initialize_state(uint64_t state[MATRIX_SIZE][MATRIX_SIZE]) {
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            state[i][j] = 0; // Initialize all lanes to zero
+        }
+    }
+}
+
+// Function to simulate the addition of a block
+void add_block(uint64_t state[MATRIX_SIZE][MATRIX_SIZE], uint64_t block[MATRIX_SIZE][MATRIX_SIZE]) {
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            state[i][j] ^= block[i][j]; // XOR block with the state
+        }
+    }
+}
+
+// Function to check if all lanes have at least one nonzero bit
+bool all_lanes_nonzero(uint64_t state[MATRIX_SIZE][MATRIX_SIZE]) {
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            if (state[i][j] != 0) {
+                return true; // At least one nonzero lane found
+            }
+        }
+    }
+    return false; // All lanes are zero
+}
+
+int main() {
+    uint64_t state[MATRIX_SIZE][MATRIX_SIZE];
+    uint64_t block[MATRIX_SIZE][MATRIX_SIZE];
+
+    initialize_state(state);
+
+    // Initialize the block with some nonzero values
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            block[i][j] = (i + j) % 2; // Simplified example with some nonzero bits
+        }
+    }
+
+    // Number of iterations before all lanes have at least one nonzero bit
+    int iterations = 0;
+
+    // Simulate adding blocks
+    while (!all_lanes_nonzero(state)) {
+        add_block(state, block);
+        iterations++;
+    }
+
+    printf("It took %d iterations for all lanes to have at least one nonzero bit.\n", iterations);
+
+    return 0;
+}
