@@ -1,0 +1,108 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
+#define BLOCK_SIZE 8 // S-DES block size in bits (1 byte)
+#define COUNTER_SIZE 8 // Counter size in bits (1 byte)
+
+// Helper functions for S-DES operations
+uint8_t permute(uint8_t input, const uint8_t *table, int size) {
+    uint8_t output = 0;
+    for (int i = 0; i < size; i++) {
+        if (input & (1 << (table[i] - 1))) {
+            output |= (1 << i);
+        }
+    }
+    return output;
+}
+
+uint8_t f(uint8_t half_block, uint8_t key) {
+    static const uint8_t P4[] = {2, 4, 3, 1}; // P4 permutation table
+    static const uint8_t E[] = {4, 1, 2, 3}; // Expansion table
+    uint8_t expanded = permute(half_block, E, 4);
+    uint8_t output = expanded ^ key;
+    return permute(output, P4, 4);
+}
+
+uint8_t sdes_encrypt(uint8_t plaintext, uint8_t key) {
+    uint8_t left = plaintext >> 4;
+    uint8_t right = plaintext & 0x0F;
+    uint8_t f_result = f(right, key);
+    return (left ^ f_result) | (right << 4);
+}
+
+uint8_t sdes_decrypt(uint8_t ciphertext, uint8_t key) {
+    uint8_t left = ciphertext >> 4;
+    uint8_t right = ciphertext & 0x0F;
+    uint8_t f_result = f(left, key);
+    return (right ^ f_result) | (left << 4);
+}
+
+// CTR Mode functions
+void xor_blocks(uint8_t *a, uint8_t *b, uint8_t *out, int len) {
+    for (int i = 0; i < len; i++) {
+        out[i] = a[i] ^ b[i];
+    }
+}
+
+void ctr_encrypt(uint8_t *plaintext, uint8_t *ciphertext, int len, uint8_t *key, uint8_t *counter) {
+    uint8_t block[BLOCK_SIZE];
+    uint8_t counter_block[BLOCK_SIZE];
+
+    for (int i = 0; i < len; i += BLOCK_SIZE) {
+        // Encrypt the counter block
+        memcpy(counter_block, counter, BLOCK_SIZE);
+        for (int j = 0; j < BLOCK_SIZE; j++) {
+            counter_block[j] = sdes_encrypt(counter_block[j], key[j]);
+        }
+
+        // XOR the encrypted counter block with the plaintext
+        xor_blocks(plaintext + i, counter_block, block, BLOCK_SIZE);
+        memcpy(ciphertext + i, block, BLOCK_SIZE);
+
+        // Increment the counter
+        for (int j = BLOCK_SIZE - 1; j >= 0; j--) {
+            if (++counter[j] != 0) break;
+        }
+    }
+}
+
+void ctr_decrypt(uint8_t *ciphertext, uint8_t *plaintext, int len, uint8_t *key, uint8_t *counter) {
+    // Decryption in CTR mode is the same as encryption
+    ctr_encrypt(ciphertext, plaintext, len, key, counter);
+}
+
+int main() {
+    uint8_t key[BLOCK_SIZE] = {0x1F, 0x1D}; // Binary key 01111 11101
+    uint8_t counter[BLOCK_SIZE] = {0x00}; // Binary counter 0000 0000
+    uint8_t plaintext[BLOCK_SIZE * 3] = {0x01, 0x02, 0x04}; // Binary plaintext 0000 0001 0000 0010 0000 0100
+    uint8_t ciphertext[BLOCK_SIZE * 3];
+    uint8_t decryptedtext[BLOCK_SIZE * 3];
+
+    printf("Original plaintext: ");
+    for (int i = 0; i < BLOCK_SIZE * 3; i++) {
+        printf("%02X ", plaintext[i]);
+    }
+    printf("\n");
+
+    ctr_encrypt(plaintext, ciphertext, BLOCK_SIZE * 3, key, counter);
+
+    printf("Ciphertext: ");
+    for (int i = 0; i < BLOCK_SIZE * 3; i++) {
+        printf("%02X ", ciphertext[i]);
+    }
+    printf("\n");
+
+    // Reset counter for decryption
+    memset(counter, 0, BLOCK_SIZE);
+
+    ctr_decrypt(ciphertext, decryptedtext, BLOCK_SIZE * 3, key, counter);
+
+    printf("Decrypted text: ");
+    for (int i = 0; i < BLOCK_SIZE * 3; i++) {
+        printf("%02X ", decryptedtext[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
