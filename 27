@@ -1,0 +1,70 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <math.h>
+
+// Function to perform modular exponentiation
+uint64_t mod_exp(uint64_t base, uint64_t exp, uint64_t mod) {
+    uint64_t result = 1;
+    base = base % mod;
+    while (exp > 0) {
+        if (exp % 2 == 1) { // If exp is odd, multiply base with result
+            result = (result * base) % mod;
+        }
+        exp = exp >> 1; // Divide exp by 2
+        base = (base * base) % mod; // Square the base
+    }
+    return result;
+}
+
+// RSA Encryption
+uint64_t rsa_encrypt(uint64_t plaintext, uint64_t e, uint64_t n) {
+    return mod_exp(plaintext, e, n);
+}
+
+// RSA Decryption
+uint64_t rsa_decrypt(uint64_t ciphertext, uint64_t d, uint64_t n) {
+    return mod_exp(ciphertext, d, n);
+}
+
+int main() {
+    // RSA parameters (small example for demonstration)
+    uint64_t n = 3233; // Example modulus (p=61, q=53)
+    uint64_t e = 17;   // Example public exponent
+    uint64_t d = 2753; // Example private exponent
+
+    // Example plaintext values (0 to 25 representing A to Z)
+    uint64_t plaintext[] = {0, 1, 2, 25}; // A, B, C, Z
+    int num_chars = sizeof(plaintext) / sizeof(plaintext[0]);
+    
+    printf("Plaintext values: ");
+    for (int i = 0; i < num_chars; i++) {
+        printf("%lu ", plaintext[i]);
+    }
+    printf("\n");
+
+    // Encrypt plaintext
+    uint64_t ciphertext[num_chars];
+    for (int i = 0; i < num_chars; i++) {
+        ciphertext[i] = rsa_encrypt(plaintext[i], e, n);
+    }
+
+    printf("Ciphertext values: ");
+    for (int i = 0; i < num_chars; i++) {
+        printf("%lu ", ciphertext[i]);
+    }
+    printf("\n");
+
+    // Decrypt ciphertext
+    uint64_t decrypted[num_chars];
+    for (int i = 0; i < num_chars; i++) {
+        decrypted[i] = rsa_decrypt(ciphertext[i], d, n);
+    }
+
+    printf("Decrypted values: ");
+    for (int i = 0; i < num_chars; i++) {
+        printf("%lu ", decrypted[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
