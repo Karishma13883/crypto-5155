@@ -1,0 +1,107 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
+#define BLOCK_SIZE 8 // S-DES block size in bits (1 byte)
+#define NUM_BLOCKS 2 // Number of blocks in the test data
+
+// Helper functions for S-DES operations
+uint8_t permute(uint8_t input, const uint8_t *table, int size) {
+    uint8_t output = 0;
+    for (int i = 0; i < size; i++) {
+        if (input & (1 << (table[i] - 1))) {
+            output |= (1 << i);
+        }
+    }
+    return output;
+}
+
+uint8_t f(uint8_t half_block, uint8_t key) {
+    static const uint8_t P4[] = {2, 4, 3, 1}; // P4 permutation table
+    static const uint8_t E[] = {4, 1, 2, 3}; // Expansion table
+    uint8_t expanded = permute(half_block, E, 4);
+    uint8_t output = expanded ^ key;
+    return permute(output, P4, 4);
+}
+
+uint8_t sdes_encrypt(uint8_t plaintext, uint8_t key) {
+    uint8_t left = plaintext >> 4;
+    uint8_t right = plaintext & 0x0F;
+    uint8_t f_result = f(right, key);
+    return (left ^ f_result) | (right << 4);
+}
+
+uint8_t sdes_decrypt(uint8_t ciphertext, uint8_t key) {
+    uint8_t left = ciphertext >> 4;
+    uint8_t right = ciphertext & 0x0F;
+    uint8_t f_result = f(left, key);
+    return (right ^ f_result) | (left << 4);
+}
+
+// CBC Mode functions
+void xor_blocks(uint8_t *a, uint8_t *b, uint8_t *out, int len) {
+    for (int i = 0; i < len; i++) {
+        out[i] = a[i] ^ b[i];
+    }
+}
+
+void cbc_encrypt(uint8_t *plaintext, uint8_t *ciphertext, int len, uint8_t *key, uint8_t *iv) {
+    uint8_t block[BLOCK_SIZE];
+    uint8_t previous_block[BLOCK_SIZE];
+    memcpy(previous_block, iv, BLOCK_SIZE);
+
+    for (int i = 0; i < len; i += BLOCK_SIZE) {
+        xor_blocks(plaintext + i, previous_block, block, BLOCK_SIZE);
+        for (int j = 0; j < BLOCK_SIZE; j++) {
+            ciphertext[i + j] = sdes_encrypt(block[j], key[j]);
+        }
+        memcpy(previous_block, ciphertext + i, BLOCK_SIZE);
+    }
+}
+
+void cbc_decrypt(uint8_t *ciphertext, uint8_t *plaintext, int len, uint8_t *key, uint8_t *iv) {
+    uint8_t block[BLOCK_SIZE];
+    uint8_t previous_block[BLOCK_SIZE];
+    memcpy(previous_block, iv, BLOCK_SIZE);
+
+    for (int i = 0; i < len; i += BLOCK_SIZE) {
+        uint8_t temp[BLOCK_SIZE];
+        for (int j = 0; j < BLOCK_SIZE; j++) {
+            temp[j] = sdes_decrypt(ciphertext[i + j], key[j]);
+        }
+        xor_blocks(temp, previous_block, plaintext + i, BLOCK_SIZE);
+        memcpy(previous_block, ciphertext + i, BLOCK_SIZE);
+    }
+}
+
+int main() {
+    uint8_t key[BLOCK_SIZE] = {0x1F, 0x1D}; // Binary key 01111 11101
+    uint8_t iv[BLOCK_SIZE] = {0xAA}; // Binary initialization vector 1010 1010
+    uint8_t plaintext[BLOCK_SIZE] = {0x01, 0x23}; // Binary plaintext 0000 0001 0010 0011
+    uint8_t ciphertext[BLOCK_SIZE];
+    uint8_t decryptedtext[BLOCK_SIZE];
+
+    printf("Original plaintext: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02X ", plaintext[i]);
+    }
+    printf("\n");
+
+    cbc_encrypt(plaintext, ciphertext, BLOCK_SIZE, key, iv);
+
+    printf("Ciphertext: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02X ", ciphertext[i]);
+    }
+    printf("\n");
+
+    cbc_decrypt(ciphertext, decryptedtext, BLOCK_SIZE, key, iv);
+
+    printf("Decrypted text: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02X ", decryptedtext[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
